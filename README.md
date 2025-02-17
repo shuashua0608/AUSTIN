@@ -18,3 +18,7 @@ To run code for uncertainty estimation experiment:
 python ablate_PEACE_MAE_uncertain.py --epoch 100
 ```
 
+To run code for experiment with facexformer and one-peace backbones: 
+```
+python fxf_AST.py --epoch 100
+```
