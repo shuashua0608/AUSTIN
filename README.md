@@ -22,3 +22,7 @@ To run code for experiment with facexformer and one-peace backbones:
 ```
 python fxf_AST.py --epoch 100
 ```
+To run code for uncertainty estimation experiment with facexformer and one-peace backbones (without visualization yet): 
+```
+python fxf_AST_uncertain.py --epoch 100
+```
