@@ -223,7 +223,7 @@ class VideoDataset(torch.utils.data.Dataset):
                 except:
                     img_first = None
             img_first = np.float16(img_first)
-            print(path_first)
+            #print(path_first)
             target_first = path_first[0][1][0]
             triage_first = path_first[0][1][1]
             #target_first = path_first[0][1]
