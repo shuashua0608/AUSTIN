@@ -266,51 +266,51 @@ class VideoDataset(torch.utils.data.Dataset):
         return self.name_list
     
 
-# def main():
-#     arg_root = '../../Stroke_data/7seg/video_segment_fix/'  # '/Feature/Frames256/', /Feature/ori_large_frames/
-#     # audio_root = '../Audio/new_trim/16k/cookie/'
-#     audio_root = '../../Stroke_data/audio_old_2/segments/'
-#     spec_path = '../../Stroke_data/audio_old_2/spec/'
-#     strokes = []
-#     nonstrokes = []
+def main():
+    arg_root = '../../Stroke_data/7seg/video_segment_fix/'  # '/Feature/Frames256/', /Feature/ori_large_frames/
+    # audio_root = '../Audio/new_trim/16k/cookie/'
+    audio_root = '../../Stroke_data/audio_old_2/segments/'
+    spec_path = '../../Stroke_data/audio_old_2/spec/'
+    strokes = []
+    nonstrokes = []
     
-#     with open("../../Stroke/v3.csv","r") as f:
-#         for vids in f.read().splitlines():
-#             temp = vids.split(',')
-#             if temp[1] == "N/A":
-#                 continue
-#             if temp[0] in ['0018','0147','0193','0119','0259','0274','0188','0227','0298']:
-#                 continue
-#             # if temp[0] not in orig_names:
-#             #     continue
-#             if temp[2] == '1':
-#                 strokes.append(temp[0])
-#             if temp[2] == '0':
-#                 nonstrokes.append(temp[0])
+    with open("../../Stroke/v3.csv","r") as f:
+        for vids in f.read().splitlines():
+            temp = vids.split(',')
+            if temp[1] == "N/A":
+                continue
+            if temp[0] in ['0018','0147','0193','0119','0259','0274','0188','0227','0298']:
+                continue
+            # if temp[0] not in orig_names:
+            #     continue
+            if temp[2] == '1':
+                strokes.append(temp[0])
+            if temp[2] == '0':
+                nonstrokes.append(temp[0])
 
-#     print("num of stroke:", len(strokes))
-#     print("num of nonstroke:", len(nonstrokes))
+    print("num of stroke:", len(strokes))
+    print("num of nonstroke:", len(nonstrokes))
 
-#     totallist = []
-#     totallist.append([j for j in strokes if int(j) < 196])
-#     totallist.append([j for j in strokes if (int(j) >= 196 and int(j) < 237)])
-#     totallist.append([j for j in strokes if int(j) >= 237])
-#     totallist.append([j for j in nonstrokes if int(j) < 196])
-#     totallist.append([j for j in nonstrokes if (int(j) >= 196 and int(j) < 237)])
-#     totallist.append([j for j in nonstrokes if int(j) >= 237])
+    totallist = []
+    totallist.append([j for j in strokes if int(j) < 196])
+    totallist.append([j for j in strokes if (int(j) >= 196 and int(j) < 237)])
+    totallist.append([j for j in strokes if int(j) >= 237])
+    totallist.append([j for j in nonstrokes if int(j) < 196])
+    totallist.append([j for j in nonstrokes if (int(j) >= 196 and int(j) < 237)])
+    totallist.append([j for j in nonstrokes if int(j) >= 237])
     
-#     arg_batchsize_train = 32
-#     arg_batchsize_eval = 32
-#     train_loader, val_loader, test_loader, train_dataset, val_dataset, test_dataset = LoadData(arg_root, audio_root,
-#                                                                              spec_path, 0, totallist,
-#                                                                              arg_batchsize_train,
-#                                                                              arg_batchsize_eval)
-#     count = 0
-#     for epoch in range(3):
-#         for i, (input_first, spec_img, fbank_cookie, target_first, index, input_adv, spec_adv, fbank_adv, target_adv) in enumerate(train_loader):
-#             print(i)
-#             pass
+    arg_batchsize_train = 32
+    arg_batchsize_eval = 32
+    train_loader, val_loader, test_loader, train_dataset, val_dataset, test_dataset = LoadData(arg_root, audio_root,
+                                                                             spec_path, 0, totallist,
+                                                                             arg_batchsize_train,
+                                                                             arg_batchsize_eval)
+    count = 0
+    for epoch in range(3):
+        for i, (input_first, spec_img, fbank_cookie, target_first, index, input_adv, spec_adv, fbank_adv, target_adv) in enumerate(train_loader):
+            print(i)
+            pass
 
-# if __name__ == "__main__":    
-#     main()
+if __name__ == "__main__":    
+    main()
     

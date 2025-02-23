@@ -180,10 +180,10 @@ class VideoDataset(torch.utils.data.Dataset):
     def _wav2fbank(self, filename):
         waveform = None
         while waveform is None:
-            # waveform, sr = torchaudio.load(filename)
+            # waveform, sr = torchaudio.load(filename,backend='soundfile')
             try:
                 # print(filename)
-                waveform, sr = torchaudio.load(filename,backend='soudnfile')
+                waveform, sr = torchaudio.load(filename,backend='soundfile')
             except:
                 print(filename)
                 waveform = None
@@ -218,6 +218,8 @@ class VideoDataset(torch.utils.data.Dataset):
                 except:
                     img_first = None
             img_first = np.float16(img_first)
+            
+            print(path_first)
             target_first = path_first[0][1]
             
             spec_first = None

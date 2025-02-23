@@ -32,9 +32,9 @@ from torch.utils.tensorboard import SummaryWriter
 #import wandb
 
 NUM_EPOCH = 50
-LEANRING_RATE = 1e-7
+LEANRING_RATE = 1e-4
 CV_FOLD = 5
-LAMBDA = 5
+LAMBDA = 1
 # BATCH_SIZE_TRAIN = 64
 # BATCH_SIZE_TEST = 64
 BATCH_SIZE_TRAIN = 32
@@ -66,7 +66,8 @@ parser.add_argument('--version', default=5, type=int,
 parser.add_argument('--all-patient', action='store_true')
 args = parser.parse_args()
 
-postfix = "-ablation-MAE-PEACE-STEP-ADAMW-1E-7-Uncertain-E%d"%(args.epochs)
+#  "-proposed-V%d-32-L%d-R%d-E%d-ADAMW-0296-MOTION"%(args.version,args.lamb,args.lr_ratio,args.epochs)
+postfix = "-ablation-MAE-PEACE-ADAMW-1E-4-Uncertain-Lamb%d-E%d-AFTER-4"%(args.lamb, args.epochs)
 postfix += "-step%d"%args.step if args.step != 999 else "-NOSTEP"
 if args.all_patient: postfix += "-all-patient"
 load_flag = "-load" in postfix  # load means that we directly use the trained model
@@ -84,11 +85,12 @@ if not load_flag:
 
 
 class UncertaintyLoss(nn.Module):
-    def __init__(self, alpha = 1.0, lambda_weight=0.1, epsilon=1.0):
+    def __init__(self, alpha = 1.0, epsilon=1.0, lamb = 5.0):
         super().__init__()
-        self.lambda_weight = lambda_weight
+        #self.lambda_weight = lambda_weight
         self.epsilon = epsilon
         self.alpha = alpha
+        self.lamb = lamb
 
     def forward(self, y_hat, y_mri, y_triage, sigma):
         """
@@ -98,18 +100,14 @@ class UncertaintyLoss(nn.Module):
         sigma: Estimated uncertainty, shape (batch_size, 1)
         """
         # Ensure sigma is positive
-        sigma = torch.abs(sigma) + self.epsilon
+        sigma = torch.abs(sigma)  + self.epsilon # (?)
         w = torch.exp(-self.alpha * torch.abs(y_mri - y_triage))
-        # Binary Cross-Entropy Loss for raw logits
-        # y_hat_pos = y_hat[:, 1]
-        # print(y_hat, y_mri)
-        
         #criterion = nn.CrossEntropyLoss(weight=torch.tensor(wi)).cuda()
         #ce_loss = criterion(y_hat,y_mri)
         
         ce_loss = nn.CrossEntropyLoss()(y_hat, y_mri)
         # Uncertainty loss component
-        loss = ce_loss / (2 * sigma**2) + w * torch.log(sigma)
+        loss = ce_loss / (2 * sigma**2) + self.lamb* w * torch.log(sigma)
         # Auxiliary triage label loss
         # loss += self.lambda_weight * F.binary_cross_entropy_with_logits(y_hat, y_triage.float(), reduction='none')
 
@@ -160,11 +158,11 @@ def setup_optimizer(model, lr, weight_decay, patience):
     params = [p for p in all_parameters if not hasattr(p, "_optim")]
 
     # Create an optimizer with the general parameters
-    # optimizer = torch.optim.AdamW(
-    optimizer = madgrad.MADGRAD(
+    optimizer = torch.optim.AdamW(
+    # optimizer = madgrad.MADGRAD(
         params,
         lr=lr,
-        # weight_decay=1e-4
+        weight_decay=1e-4
     )
     optimizer_step = torch.optim.AdamW(
         params,
@@ -239,21 +237,6 @@ def main():
     print("load flag:", load_flag)
     print("restore from:", restore_from)
 
-    # if args.version == 5:
-    #     with open("v5.csv","r") as f:
-    #         for vids in f.read().splitlines():
-    #             temp = vids.split(',')
-    #             if temp[0] in ['0018','0147','0193','0119','0259','0274','0188','0298','0036','0078']:
-    #                 continue
-    #             if args.all_patient and temp[0] in ['0001','0002','0079','0092','0140','0141','0142','0143','0270','0272','0276','0278','0280','0282','0285','0289','0291','0292','0297']:
-    #                 continue
-    #             if temp[1] == '1':
-    #                 strokes.append(temp[0])
-    #             if temp[1] == '0':
-    #                 nonstrokes.append(temp[0])
-
-    #     print("num of stroke:", len(strokes))
-    #     print("num of nonstroke:", len(nonstrokes))
     df = pd.read_csv('../triage_gt.csv', dtype=object)
     df.ID = df.ID.apply(lambda x: "%04d"%int(x))
 
@@ -310,7 +293,7 @@ def main():
     # dis.cuda()
     gradient_scaler = torch.cuda.amp.GradScaler()
 
-    criterion = UncertaintyLoss(alpha=1.0, lambda_weight = 0.1)
+    criterion = UncertaintyLoss(alpha=1.0, lamb = args.lamb)
     #nn.CrossEntropyLoss(weight=torch.tensor(wi)).cuda()
     # criterion2 = nn.MSELoss()
     # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), args.lr,
@@ -345,6 +328,11 @@ def main():
         writer.add_scalar('AUC/test', auc_test, epoch)
         is_best = auc > best_auc
         # is_best = prec1 > best_prec1
+        
+        if epoch == 4:
+            is_best = True
+            best_auc = auc
+            
         if is_best:
             best_pred = predtmp
             best_targ = targ

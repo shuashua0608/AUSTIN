@@ -293,8 +293,7 @@ def main():
     best_auc = 0
     best_prec1 = 0
 
-    train_loader, val_loader, test_loader, train_dataset, val_dataset, test_dataset = dataload.LoadData(arg_root, audio_root,
-                                                                             spec_path, 0, totallist,
+    train_loader, val_loader, test_loader, train_dataset, val_dataset, test_dataset = dataload.LoadData(arg_root, audio_root,  spec_path, 0, totallist,
                                                                              arg_batchsize_train,
                                                                              arg_batchsize_eval)
     args.class_num = NUM_CLASS

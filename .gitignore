@@ -4,3 +4,4 @@ video-snapshots-deterministic-64x7/*
 video-snapshots-deterministic-64x7-fix-grad/*
 .ipynb_checkpoints/*
 .marlin/*
+*.pyc

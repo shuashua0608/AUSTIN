@@ -41,8 +41,9 @@ BATCH_SIZE_TRAIN = 32
 BATCH_SIZE_TEST = 16
 # root = "/data/stroke"
 root = "."
-wi = [2.0, 1.0]   # [1.25, 1.0]
-postfix = "-S4-MedIA-PEACE-UNCERTAIN-Sigma-FULL-LR-4"  #L200 means 200*2 frames, I original use 400*2 frames
+#wi = [2.0, 1.0]   
+wi = [1.25, 1.0]
+postfix = "-NEW-S4-MedIA-PEACE-UNCERTAIN-Sigma-FULL-LR-4-AFTER-4-w%.2f"% (wi[0])  #L200 means 200*2 frames, I original use 400*2 frames
 parser = argparse.ArgumentParser(description='MMDL')
 parser.add_argument('--lr-ratio', '-r', default=2, type=float,
                     metavar='LRR', help='Ratio of losses')
@@ -116,14 +117,11 @@ class UncertaintyLoss(nn.Module):
         # Ensure sigma is positive
         sigma = torch.abs(sigma) + self.epsilon
         w = torch.exp(-self.alpha * torch.abs(y_mri - y_triage))
-        # Binary Cross-Entropy Loss for raw logits
-        # y_hat_pos = y_hat[:, 1]
-        # print(y_hat, y_mri)
+
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor(wi)).cuda()
+        ce_loss = criterion(y_hat,y_mri)
         
-        #criterion = nn.CrossEntropyLoss(weight=torch.tensor(wi)).cuda()
-        #ce_loss = criterion(y_hat,y_mri)
-        
-        ce_loss = nn.CrossEntropyLoss()(y_hat, y_mri)
+        # ce_loss = nn.CrossEntropyLoss(weight=torch.tensor(wi))(y_hat, y_mri)
         # Uncertainty loss component
         loss = ce_loss / (2 * sigma**2) + w * torch.log(sigma)
         # Auxiliary triage label loss
@@ -363,9 +361,9 @@ def main():
         is_best = auc > best_auc
         # is_best = prec1 > best_prec1
         
-        # if epoch == 20:
-        #     is_best = True
-        #     best_auc = auc
+        if epoch == 4:
+            is_best = True
+            best_auc = auc
             
         if is_best:
             best_pred = predtmp
