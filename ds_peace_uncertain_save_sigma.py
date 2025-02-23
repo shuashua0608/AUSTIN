@@ -41,7 +41,6 @@ BATCH_SIZE_TRAIN = 32
 BATCH_SIZE_TEST = 16
 # root = "/data/stroke"
 root = "."
-#wi = [2.0, 1.0]   
 w_cal = True
 wi = [1.0, 1.0]
 
@@ -51,6 +50,8 @@ parser.add_argument('--lr-ratio', '-r', default=2, type=float,
                     
 parser.add_argument('--lamb', '-l', default=LAMBDA, type=int,
                     metavar='L', help='Ratio of losses')
+
+parser.add_argument('--wi', default=wi[0], type=float)
 parser.add_argument('--w', default=w_cal, type=bool,help='weight of second term in uncertainty loss')
 parser.add_argument('--epochs', default=NUM_EPOCH, type=int, 
                     help='number of total epochs to run')
@@ -77,7 +78,7 @@ parser.add_argument('--all-patient', action='store_true')
 
 args = parser.parse_args()
 
-postfix = "-NEW-S4-MedIA-PEACE-UNCERTAIN-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (wi[0], args.epochs, args.w)  #L200 means 200*2 frames, I original use 400*2 frames
+postfix = "-NEW-S4-MedIA-PEACE-UNCERTAIN-Save-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, args.w)  #L200 means 200*2 frames, I original use 400*2 frames
 
 postfix += "-step%d"%args.step if args.step != 999 else "-NOSTEP"
 if args.norm: postfix += "-NORM"
@@ -109,6 +110,7 @@ class UncertaintyLoss(nn.Module):
         self.epsilon = epsilon
         self.alpha = alpha
         self.w_cal = args.w
+        self.wi=args.wi
 
     def forward(self, y_hat, y_mri, y_triage, sigma):
         """
@@ -119,7 +121,7 @@ class UncertaintyLoss(nn.Module):
         """
         # Ensure sigma is positive
         sigma = torch.abs(sigma) + self.epsilon
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor(wi)).cuda()
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor([self.wi, 1.0])).cuda()
         ce_loss = criterion(y_hat,y_mri)
         
         # Uncertainty loss component
@@ -551,7 +553,7 @@ def validate(val_loader, model, val_dataset):
     index_vector = []
     sigma_vector = []
     with torch.no_grad():
-        for i, (input_first, spec_img, audio_first, target_first, triage_first, index) in enumerate(val_loader):
+        for i, (input_first, spec_img, audio_first, target_first, triage_first, index, filename) in enumerate(val_loader):
             target = target_first.cuda()
             imgvar = input_first.cuda()  # input: [16,3, 128,128] target:[16]
             specvar = spec_img.cuda()
