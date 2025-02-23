@@ -1,5 +1,14 @@
 # MUStroke
 
+## Updated:
+
+```
+python ds_peace_uncertain_save_sigma.py --epochs 100 --wi 2.0 --w True
+```
+wi: Test different weights in CE loss (nn.CrossEntropyLoss(weight=torch.tensor([self.wi, 1.0])))\
+w: when False, the second term in uncertainty loss is set to be constant 1. 
+
+## previous old version: 
 We use [MARLIN](https://github.com/ControlNet/MARLIN) for visual feature extraction, and pretrained VGG model from [ONE-PEACE](https://github.com/OFA-Sys/ONE-PEACE/tree/main) for audio feature extraction.
 
 To install environment:
