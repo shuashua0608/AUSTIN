@@ -256,7 +256,7 @@ class VideoDataset(torch.utils.data.Dataset):
             spec_first = self.transform(spec_first)
         
             del path_first
-            return img_first, spec_first, fbank, target_first, triage_first, self.index[index]
+            return img_first, spec_first, fbank, target_first, triage_first, self.index[index], filename
 
 
     def __len__(self):
