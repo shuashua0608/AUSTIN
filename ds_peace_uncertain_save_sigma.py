@@ -52,7 +52,7 @@ parser.add_argument('--lamb', '-l', default=LAMBDA, type=int,
                     metavar='L', help='Ratio of losses')
 
 parser.add_argument('--wi', default=wi[0], type=float)
-parser.add_argument('--w', default=w_cal, type=bool,help='weight of second term in uncertainty loss')
+#parser.add_argument('--w', default=w_cal, type=bool,help='weight of second term in uncertainty loss')
 parser.add_argument('--epochs', default=NUM_EPOCH, type=int, 
                     help='number of total epochs to run')
 parser.add_argument('--version', default=5, type=int, 
@@ -76,9 +76,12 @@ parser.add_argument('--param', action='store_true')
 parser.add_argument('--adv', action='store_true')
 parser.add_argument('--all-patient', action='store_true')
 
+parser.add_argument('--w', action='store_true', help='Enable second term in uncertainty loss(else 1)') #--w will set args.w to True, and if --w is omitted remains False
 args = parser.parse_args()
 
-postfix = "-NEW-S4-MedIA-PEACE-UNCERTAIN-Save-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, args.w)  #L200 means 200*2 frames, I original use 400*2 frames
+postfix = "-final-S4-MedIA-PEACE-UNCERTAIN-Save-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, str(args.w))  #L200 means 200*2 frames, I original use 400*2 frames
+
+#postfix = "-NEW-S4-MedIA-PEACE-UNCERTAIN-Save-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, args.w)  #L200 means 200*2 frames, I original use 400*2 frames
 
 postfix += "-step%d"%args.step if args.step != 999 else "-NOSTEP"
 if args.norm: postfix += "-NORM"

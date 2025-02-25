@@ -75,11 +75,13 @@ parser.add_argument('--param', action='store_true')
 # parser.add_argument('--grad', action='store_true')
 parser.add_argument('--adv', action='store_true')
 parser.add_argument('--all-patient', action='store_true')
-parser.add_argument('--w', action='store_true', help='Enable second term in uncertainty loss(else 1)') #--w will set args.w to True, and if --w is omitted remains False
 
+parser.add_argument('--w', action='store_true', help='Enable second term in uncertainty loss(else 1)') #--w will set args.w to True, and if --w is omitted remains False
 args = parser.parse_args()
 
-postfix = "-final-S4-MedIA-PEACE-UNCERTAIN-OHEM-Save-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, str(args.w))  #L200 means 200*2 frames, I original use 400*2 frames
+postfix = "-final-S4-MedIA-PEACE-UNCERTAIN-Save-Sigma-Fix-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, str(args.w))  #L200 means 200*2 frames, I original use 400*2 frames
+
+#postfix = "-NEW-S4-MedIA-PEACE-UNCERTAIN-Save-Sigma-FULL-LR-4-AFTER-4-w%.2f-E%d-weight-%s"% (args.wi, args.epochs, args.w)  #L200 means 200*2 frames, I original use 400*2 frames
 
 postfix += "-step%d"%args.step if args.step != 999 else "-NOSTEP"
 if args.norm: postfix += "-NORM"
@@ -104,61 +106,37 @@ LOG_PATH = SNAPSHOT_DIR + "/B"+format(BATCH_SIZE_TRAIN, "04d")+"E"+format(args.e
 if not load_flag:
     sys.stdout = my_logger(LOG_PATH, sys.stdout)
 
-
-class UncertaintyLossWithOHEM(nn.Module):
-    def __init__(self, alpha=1.0, lambda_weight=0.1, epsilon=1.0, w_cal=True, wi=1.0, ohem_ratio=0.5):
-        """
-        Args:
-            alpha: Weight for consistency between MRI and triage labels.
-            lambda_weight: Weight for auxiliary triage loss (not used here but kept for compatibility).
-            epsilon: Small constant to ensure numerical stability.
-            w_cal: Whether to calculate the consistency weight `w`.
-            wi: Weight for CrossEntropyLoss (class imbalance).
-            ohem_ratio: Ratio of hard examples to select (e.g., 0.5 means 50% hardest examples).
-        """
+class UncertaintyLoss(nn.Module):
+    def __init__(self, alpha = 1.0, lambda_weight=0.1, epsilon=1.0):
         super().__init__()
-        self.alpha = alpha
         self.lambda_weight = lambda_weight
         self.epsilon = epsilon
+        self.alpha = alpha
         self.w_cal = args.w
         self.wi=args.wi
-        self.ohem_ratio = ohem_ratio  # Ratio of hard examples to select
 
     def forward(self, y_hat, y_mri, y_triage, sigma):
         """
-        Args:
-            y_hat: Raw logits, shape (batch_size, num_classes)
-            y_mri: Ground truth MRI labels (0 or 1), shape (batch_size,)
-            y_triage: Triage labels (0 or 1), shape (batch_size,)
-            sigma: Estimated uncertainty, shape (batch_size, 1)
+        y_hat: Raw logits, shape (batch_size, 1)
+        y_mri: Ground truth MRI labels (0 or 1), shape (batch_size,)
+        y_triage: Triage labels (0 or 1), shape (batch_size,)
+        sigma: Estimated uncertainty, shape (batch_size, 1)
         """
         # Ensure sigma is positive
-        sigma = torch.abs(sigma)# + self.epsilon
-
-        # CrossEntropyLoss with class weights
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor([self.wi, 1.0]), reduction='none').cuda()
-        ce_loss = criterion(y_hat, y_mri)
-        # Consistency weight between MRI and triage labels
+        sigma = torch.abs(sigma) #+ self.epsilon
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor([self.wi, 1.0])).cuda()
+        ce_loss = criterion(y_hat,y_mri)
+        
+        # Uncertainty loss component
         if self.w_cal:
             w = torch.exp(-self.alpha * torch.abs(y_mri - y_triage))
         else:
             w = 1
+        loss = ce_loss / (2 * sigma**2) + w * torch.log(sigma + self.epsilon)
+        # Auxiliary triage label loss
+        # loss += self.lambda_weight * F.binary_cross_entropy_with_logits(y_hat, y_triage.float(), reduction='none')
 
-        # Uncertainty loss component
-        uncertainty_loss = ce_loss / (2 * sigma.squeeze()**2) + w * torch.log(sigma.squeeze()+ self.epsilon)
-
-        # Calculate per-sample loss for OHEM
-        per_sample_loss = uncertainty_loss  
-
-        # Online Hard Example Mining (OHEM)
-        num_inst = per_sample_loss.size(0)
-        num_hns = max(1, int(self.ohem_ratio * num_inst))  # Ensure at least 1 hard example
-        _, idxs = per_sample_loss.topk(num_hns)  # Select the hardest examples
-
-        final_loss = uncertainty_loss[idxs].mean()
-
-        return final_loss
-
+        return loss.mean()
 
 def examine_thre(thres,score,target):
     new_thre = score.copy()
@@ -332,7 +310,7 @@ def main():
 
     #criterion1 = nn.CrossEntropyLoss(weight=torch.tensor(wi)).cuda()
     
-    criterion1 = UncertaintyLossWithOHEM(alpha=1.0, lambda_weight=0.1, epsilon=1.0)
+    criterion1 = UncertaintyLoss(alpha=1.0, lambda_weight = 0.1)
     criterion2 = nn.MSELoss()
     
     # optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), args.lr,
