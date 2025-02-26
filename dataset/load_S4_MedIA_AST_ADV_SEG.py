@@ -219,7 +219,7 @@ class VideoDataset(torch.utils.data.Dataset):
                     img_first = None
             img_first = np.float16(img_first)
             
-            print(path_first)
+            #print(path_first)
             target_first = path_first[0][1]
             
             spec_first = None

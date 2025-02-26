@@ -14,8 +14,7 @@ import torchvision.transforms as transforms
 cate2label = {'nonstroke': 0, 'stroke': 1}
 
 
-def LoadData(root, audio_root, spec_path, current_fold, totallist, tri_dic,
-             batchsize_train, batchsize_eval):
+def LoadData(root, audio_root, spec_path, current_fold, totallist,              batchsize_train, batchsize_eval):
     train_dataset = VideoDataset(
         labelid=1,
         current=current_fold,
@@ -23,7 +22,7 @@ def LoadData(root, audio_root, spec_path, current_fold, totallist, tri_dic,
         audio_root=audio_root,
         spec_path = spec_path, 
         video_list=totallist,
-        tri_dic = tri_dic,
+        #tri_dic = tri_dic,
         transform=transforms.Compose([
                                       transforms.Resize((224, 224)),
                                       transforms.ToTensor(),
@@ -38,7 +37,7 @@ def LoadData(root, audio_root, spec_path, current_fold, totallist, tri_dic,
         audio_root=audio_root,
         spec_path = spec_path, 
         video_list=totallist,
-        tri_dic = tri_dic,
+        #tri_dic = tri_dic,
         transform=transforms.Compose([
                                       transforms.Resize((224, 224)),
                                       transforms.ToTensor(),
@@ -53,7 +52,7 @@ def LoadData(root, audio_root, spec_path, current_fold, totallist, tri_dic,
         audio_root=audio_root,
         spec_path = spec_path, 
         video_list=totallist,
-        tri_dic = tri_dic,
+       # tri_dic = tri_dic,
         transform=transforms.Compose([
                                       transforms.Resize((224, 224)),
                                       transforms.ToTensor(),
@@ -93,7 +92,7 @@ def LoadParameter(_structure, _parameterDir):
     return model
 
 # feature map w/ computing difference
-def load_all(labelid, roundid, video_root, audio_root, spec_root, video_list,tri_dic):
+def load_all(labelid, roundid, video_root, audio_root, spec_root, video_list):
     # print(audio_root)
     imgs_first = list()
     wavs_first = list()
@@ -126,7 +125,7 @@ def load_all(labelid, roundid, video_root, audio_root, spec_root, video_list,tri
     for line in video_list:
         video_label = line.split()
         video_name = video_label[0]  # name of video
-        tri_label = tri_dic[video_name]
+        #tri_label = tri_dic[video_name]
         label = cate2label[video_label[1]]  # label of video
         video_path = os.path.join(video_root, video_name)  # video_path is the path of each video
         spec_path = os.path.join(spec_root, video_name)
@@ -137,7 +136,7 @@ def load_all(labelid, roundid, video_root, audio_root, spec_root, video_list,tri
         # print(img_lists)
         img_count = len(img_lists)
         for clip in img_lists:
-            imgs_first.append((os.path.join(video_path, clip), (label,tri_label)))
+            imgs_first.append((os.path.join(video_path, clip), label)) #(label,tri_label)
             specs_first.append(os.path.join(spec_path, clip[:-4]+'.png'))
             wavs_first.append(os.path.join(audio_path, clip[:-4]+'.npy'))
             
@@ -149,12 +148,12 @@ def load_all(labelid, roundid, video_root, audio_root, spec_root, video_list,tri
 
 
 class VideoDataset(torch.utils.data.Dataset):
-    def __init__(self, labelid, current, video_root, audio_root, spec_path, video_list, tri_dic, transform=None):
+    def __init__(self, labelid, current, video_root, audio_root, spec_path, video_list, transform=None):
         self.label = labelid
         self.roundid = current
         self.audio_root = audio_root
         self.spec_path = spec_path
-        self.imgs_first, self.wavs_first, self.specs_first, self.index, self.name_list = load_all(labelid, current, video_root, audio_root, spec_path, video_list,tri_dic)
+        self.imgs_first, self.wavs_first, self.specs_first, self.index, self.name_list = load_all(labelid, current, video_root, audio_root, spec_path, video_list)
         # print(self.imgs_first.shape,self.wavs_first.shape,self.specs_first.shape, self.index.shape)
         # remain to optimize about the parameter length
         self.transform = transform
@@ -191,8 +190,8 @@ class VideoDataset(torch.utils.data.Dataset):
                 except:
                     img_first = None
             img_first = np.float16(img_first)
-            target_first = path_first[0][1][0]
-            triage_first = path_first[0][1][1]
+            target_first = path_first[0][1]
+            #triage_first = path_first[0][1][1]
             
             spec_first = None
             while spec_first is None:
