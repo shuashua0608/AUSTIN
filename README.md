@@ -11,6 +11,7 @@ pip install torchaudio==2.2.0
 pip install marlin_pytorch
 ```
 
+Please also refer to a previous work [DeepStroke](https://github.com/0CTA0/MICCAI20_MMDL_PUBLIC) for reference. Thanks to [CTA](https://github.com/0CTA0). 
 ## Main implementation:
 
 ```
@@ -34,6 +35,7 @@ To run code for experiment with facexformer and one-peace backbones:
 ```
 python fxf_AST.py --epoch 100
 ```
+
 To run code for uncertainty estimation experiment with facexformer and one-peace backbones (without visualization yet): 
 ```
 python fxf_AST_uncertain.py --epoch 100
