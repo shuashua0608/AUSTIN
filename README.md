@@ -15,7 +15,7 @@ Please also refer to a previous work [DeepStroke](https://github.com/0CTA0/MICCA
 ## Main implementation:
 
 ```
-python ds_peace_uncertain_save_sigma.py --epochs 100 --wi 2.0 --w True
+python ds_peace_uncertain_save_sigma.py --epochs 100 --wi 1.50 --w True
 ```
 wi: Test different weights in CE loss (nn.CrossEntropyLoss(weight=torch.tensor([self.wi, 1.0])))\
 w: when False, the second term in uncertainty loss is set to be constant 1. 
